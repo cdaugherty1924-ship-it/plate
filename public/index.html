@@ -256,7 +256,8 @@ async function send(text){
   if(!passcode){
     passcode = text;
     try{ localStorage.setItem("plate-pass", passcode); }catch(e){}
-    render(); return;
+    state.chat.push({role:"assistant",text:"You're in. Now just tell me what you ate.",ts:Date.now()});
+    save(); render(); return;
   }
   const history = state.chat.filter(m=>!m.err).slice(-11).map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}));
   state.chat.push({role:"user",text,ts:Date.now()});

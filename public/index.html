@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Plate</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plate">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FBFAF7">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#FBFAF7; --surface:#FFFFFF; --fg:#2B2A27; --muted:#8F8C85; --line:#ECE9E2;
+  --accent:#FFFFFF; --accent-ink:#2B2A27; --you:#F5F2EB; --you-ink:#2B2A27; --over:#2B2A27;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.4;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+.app{height:100%;display:flex;flex-direction:column;max-width:560px;margin:0 auto;padding-inline:16px}
+
+header{padding-block:14px 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.today-label{font-size:13px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.today-num{font-family:var(--display);font-weight:800;font-size:44px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.today-num small{font-family:var(--body);font-size:15px;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:4px}
+.today{min-width:0}
+.goal-link{border:0;background:none;padding:4px 0 0;font:500 14px var(--body);color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+.goal-link.left{color:var(--muted);text-decoration:none}
+.goal-link.over{color:var(--fg);font-weight:600;text-decoration:none}
+.goal-form{display:flex;gap:6px;align-items:center;margin-top:6px}
+.goal-form input{width:90px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:16px var(--body);padding:6px 10px;border-radius:10px}
+.goal-form button{border:1px solid var(--line);background:var(--accent);color:var(--accent-ink);font:600 14px var(--body);padding:7px 12px;border-radius:10px;cursor:pointer}
+.goal-form button.ghost{background:transparent;color:var(--muted);padding-inline:6px}
+.bar{height:4px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:6px}
+.bar i{display:block;height:100%;width:0;background:#E2DED5;border-radius:99px;transition:width .4s}
+.bar.over i{background:var(--fg)}
+.day-h .tot small{font:500 14px var(--body);color:var(--muted);margin-left:4px}
+.day-h .tot.over{color:var(--over)}
+.switch{display:flex;background:#F3F0E9;border-radius:999px;padding:3px;gap:2px}
+.switch button{border:0;background:transparent;color:var(--muted);font:600 15px var(--body);padding:8px 16px;border-radius:999px;cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.switch button:focus-visible,.send:focus-visible{outline:2px solid #DDD9D0;outline-offset:2px}
+
+main{flex:1;min-height:0;position:relative}
+.pane{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-block:8px 16px}
+
+.msgs{display:flex;flex-direction:column;gap:10px}
+.b{max-width:85%;padding:10px 14px;border-radius:18px;white-space:pre-wrap;word-wrap:break-word}
+.b.you{align-self:flex-end;background:var(--you);color:var(--you-ink);border:1px solid var(--line);border-bottom-right-radius:6px}
+.b.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.b.ai.err{color:var(--muted)}
+.added{margin-top:8px;padding-top:8px;border-top:1px solid var(--line);display:grid;gap:2px;font-size:14px;color:var(--muted)}
+.added div{display:flex;justify-content:space-between;gap:12px}
+.added span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--muted);opacity:.4;animation:d 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
+@keyframes d{40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none;opacity:.8}}
+
+.composer{display:flex;gap:8px;align-items:flex-end;padding-top:10px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.composer textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:16px/1.35 var(--body);padding:12px 16px;border-radius:22px;max-height:140px;outline:none}
+.composer textarea:focus{border-color:#DDD9D0}
+.send{flex:none;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.06);background:var(--accent);color:var(--accent-ink);cursor:pointer;display:grid;place-items:center}
+.send:disabled{opacity:.4;cursor:default}
+
+.day{padding-block:14px 18px;border-bottom:1px solid var(--line)}
+.day:last-child{border-bottom:0}
+.day-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.day-h h2{margin:0;font:700 20px var(--display);text-wrap:balance}
+.day-h .tot{font:800 22px var(--display);font-variant-numeric:tabular-nums}
+.meal{margin-top:10px}
+.meal-h{display:flex;justify-content:space-between;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.item{display:flex;justify-content:space-between;gap:12px;padding-block:3px}
+.item span:first-child{min-width:0}
+.item span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:48px 8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="today">
+      <div class="today-label">Today</div>
+      <div class="today-num"><span id="todayTotal">0</span><small id="todayOf">cal</small></div>
+      <button class="goal-link" id="goalLink" type="button">Set a daily goal</button>
+      <form class="goal-form" id="goalForm" hidden>
+        <input id="goalInput" type="number" inputmode="numeric" min="0" step="50" placeholder="2000" aria-label="Daily calorie goal">
+        <button type="submit">Save</button>
+        <button type="button" id="goalCancel" class="ghost">Cancel</button>
+      </form>
+    </div>
+    <div class="switch" role="group" aria-label="View">
+      <button id="tabChat" aria-pressed="true">Chat</button>
+      <button id="tabDays" aria-pressed="false">Days</button>
+    </div>
+  </header>
+  <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+
+  <main>
+    <section class="pane" id="chatPane"><div class="msgs" id="msgs"></div></section>
+    <section class="pane" id="daysPane" hidden><div id="days"></div></section>
+  </main>
+
+  <form class="composer" id="form">
+    <textarea id="box" rows="1" placeholder="What did you eat?" aria-label="What did you eat?"></textarea>
+    <button class="send" id="send" type="submit" aria-label="Send">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    </button>
+  </form>
+</div>
+
+<script>
+const MEALS = ["breakfast","lunch","dinner","snacks"];
+const MEAL_LABEL = {breakfast:"Breakfast",lunch:"Lunch",dinner:"Dinner",snacks:"Snacks"};
+const state = { days:{}, chat:[], busy:false, goal:0 };
+const $ = id => document.getElementById(id);
+const fmt = n => Math.round(n).toLocaleString();
+
+function ymd(d){ const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); }
+const todayKey = () => ymd(new Date());
+function dayLabel(key){
+  const t = new Date(); const y = new Date(); y.setDate(t.getDate()-1);
+  if(key===ymd(t)) return "Today"; if(key===ymd(y)) return "Yesterday";
+  const [Y,M,D]=key.split("-").map(Number);
+  return new Date(Y,M-1,D).toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+}
+const sum = items => (items||[]).reduce((a,i)=>a+(Number(i.cal)||0),0);
+
+/* ---------- storage: this phone ---------- */
+let passcode = "";
+try{ passcode = localStorage.getItem("plate-pass") || ""; }catch(e){}
+function load(){
+  try{ const s=JSON.parse(localStorage.getItem("plate")||"{}"); state.days=s.days||{}; state.chat=s.chat||[]; state.goal=Number(s.goal)||0; }catch(e){}
+}
+function save(){
+  state.chat = state.chat.slice(-60);
+  try{ localStorage.setItem("plate",JSON.stringify({days:state.days,chat:state.chat,goal:state.goal})); }catch(e){}
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  const t = sum(state.days[todayKey()]), g = state.goal;
+  $("todayTotal").textContent = fmt(t);
+  $("todayOf").textContent = g ? "/ "+fmt(g) : "cal";
+  const link=$("goalLink"); link.className="goal-link";
+  if(!g) link.textContent="Set a daily goal";
+  else if(t<=g){ link.textContent=fmt(g-t)+" left"; link.classList.add("left"); }
+  else { link.textContent=fmt(t-g)+" over"; link.classList.add("over"); }
+  $("bar").hidden=!g; $("bar").classList.toggle("over", g && t>g);
+  $("barFill").style.width = g ? Math.min(100, t/g*100)+"%" : "0";
+  $("box").placeholder = passcode ? "What did you eat?" : "Enter your passcode";
+  $("box").type = "text";
+  renderChat(); renderDays();
+}
+function renderChat(){
+  const el=$("msgs"); el.textContent="";
+  let list = state.chat.length ? state.chat : [{role:"assistant",text:"Just tell me what you ate. No sizes or brands needed, I'll guess.\n\nTry: “Chobani and a Starbucks muffin for breakfast, two slices of pizza for lunch.”"}];
+  if(!passcode) list = [...list, {role:"assistant",text:"First, type your Plate passcode and hit send. You only do this once on this phone."}];
+  for(const m of list){
+    const b=document.createElement("div");
+    b.className="b "+(m.role==="user"?"you":"ai")+(m.err?" err":"");
+    b.textContent=m.text;
+    if(m.items && m.items.length){
+      const a=document.createElement("div"); a.className="added";
+      for(const it of m.items){ const r=document.createElement("div");
+        const n=document.createElement("span"); n.textContent=it.name;
+        const c=document.createElement("span"); c.textContent=fmt(it.cal);
+        r.append(n,c); a.append(r); }
+      b.append(a);
+    }
+    el.append(b);
+  }
+  if(state.busy){ const b=document.createElement("div"); b.className="b ai"; b.innerHTML='<span class="dots"><i></i><i></i><i></i></span>'; el.append(b); }
+  const pane=$("chatPane"); pane.scrollTop=pane.scrollHeight;
+}
+function renderDays(){
+  const el=$("days"); el.textContent="";
+  const keys=Object.keys(state.days).filter(k=>state.days[k]?.length).sort().reverse();
+  if(!keys.length){ const e=document.createElement("div"); e.className="empty"; e.textContent="Nothing logged yet. Tell the chat what you ate and it shows up here."; el.append(e); return; }
+  for(const k of keys){
+    const items=state.days[k];
+    const day=document.createElement("div"); day.className="day";
+    day.innerHTML='<div class="day-h"><h2></h2><span class="tot"></span></div>';
+    day.querySelector("h2").textContent=dayLabel(k);
+    const tot=day.querySelector(".tot"), dt=sum(items);
+    tot.textContent=fmt(dt);
+    if(state.goal){ const s=document.createElement("small"); s.textContent="/ "+fmt(state.goal); tot.append(s); tot.classList.toggle("over", dt>state.goal); }
+    for(const meal of MEALS){
+      const mi=items.filter(i=>i.meal===meal); if(!mi.length) continue;
+      const m=document.createElement("div"); m.className="meal";
+      const h=document.createElement("div"); h.className="meal-h";
+      const a=document.createElement("span"); a.textContent=MEAL_LABEL[meal];
+      const b=document.createElement("span"); b.textContent=fmt(sum(mi));
+      h.append(a,b); m.append(h);
+      for(const it of mi){ const r=document.createElement("div"); r.className="item";
+        const n=document.createElement("span"); n.textContent=it.name;
+        const c=document.createElement("span"); c.textContent=fmt(it.cal);
+        r.append(n,c); m.append(r); }
+      day.append(m);
+    }
+    el.append(day);
+  }
+}
+
+/* ---------- tabs ---------- */
+function show(which){
+  const chat=which==="chat";
+  $("chatPane").hidden=!chat; $("daysPane").hidden=chat;
+  $("tabChat").setAttribute("aria-pressed",chat); $("tabDays").setAttribute("aria-pressed",!chat);
+  if(chat){ const p=$("chatPane"); p.scrollTop=p.scrollHeight; }
+}
+$("tabChat").onclick=()=>show("chat");
+$("tabDays").onclick=()=>show("days");
+
+/* ---------- Claude ---------- */
+function rules(){
+  const now=new Date();
+  const recent={}; const keys=Object.keys(state.days).sort().slice(-10);
+  for(const k of keys) recent[k]=state.days[k];
+  return `You are the brain of a dead-simple calorie tracker. The user tells you in plain words what they ate. Your job: estimate calories and log it.
+
+Rules:
+- Never ask for brands, weights, or sizes. Guess typical portions and give your best estimate. Being within 10-20% is fine.
+- Restaurant and chain items: use what you know about that chain's typical numbers.
+- Homemade meals: assume normal home portions and normal cooking oil.
+- Meals are: breakfast, lunch, dinner, snacks. Use what the user says. If they don't say, infer from wording or the current time. Drinks and desserts between meals go in snacks.
+- Today is ${ymd(now)} (${now.toLocaleDateString("en-US",{weekday:"long"})}), local time ${now.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"})}. Resolve "yesterday", "this morning", weekday names, etc. relative to that.
+- The user's daily calorie goal is ${state.goal ? state.goal : "not set"}. If they ask to set or change it, put the new number in "goal". When a goal is set, you may mention how much is left for today.
+- The user can also correct or remove things ("actually it was 3 slices", "remove the muffin"). Apply those edits.
+
+Current log (date -> items):
+${JSON.stringify(recent)}
+
+Reply with ONLY a JSON object:
+{"reply": "...", "days": {"YYYY-MM-DD": [{"meal":"lunch","name":"Pizza, 2 slices","cal":570}]}, "goal": null}
+
+- "goal": a number only when the user sets or changes their daily goal, otherwise null.
+- "days" contains ONLY the dates you changed, each with the COMPLETE new list for that date: every existing item you keep plus anything new. Removing an item = leaving it out. If nothing changes (e.g. a question), use "days": {}.
+- Item "name": short, 2-5 words, include quantity when more than one (e.g. "Pizza, 2 slices"). One entry per food or drink. "cal": integer.
+- "reply": 1-2 short, friendly sentences in plain text. Mention roughly what you logged and the new total for that day. Don't list every item. If they ask a question, answer it briefly.`;
+}
+
+async function send(text){
+  if(state.busy) return;
+  if(!passcode){
+    passcode = text;
+    try{ localStorage.setItem("plate-pass", passcode); }catch(e){}
+    render(); return;
+  }
+  const history = state.chat.filter(m=>!m.err).slice(-11).map(m=>({role:m.role==="user"?"user":"assistant",content:m.text}));
+  state.chat.push({role:"user",text,ts:Date.now()});
+  state.busy=true; render();
+  try{
+    const r = await fetch("/api/log",{method:"POST",headers:{"content-type":"application/json","x-passcode":passcode},body:JSON.stringify({rules:rules(),history,text})});
+    if(r.status===401){
+      passcode=""; try{ localStorage.removeItem("plate-pass"); }catch(e){}
+      state.chat.pop();
+      state.chat.push({role:"assistant",text:"That passcode didn't work. Type it again, then resend what you ate.",err:true});
+      throw "handled";
+    }
+    if(!r.ok) throw new Error("http "+r.status);
+    const out = await r.json();
+    const changed = out && typeof out.days==="object" && out.days ? out.days : {};
+    const added=[];
+    for(const [key,list] of Object.entries(changed)){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(key) || !Array.isArray(list)) continue;
+      const clean=list.map(i=>({meal:MEALS.includes(i.meal)?i.meal:"snacks",name:String(i.name||"Food").slice(0,60),cal:Math.max(0,Math.round(Number(i.cal)||0))}));
+      const before=new Set((state.days[key]||[]).map(i=>i.meal+"|"+i.name+"|"+i.cal));
+      for(const i of clean) if(!before.has(i.meal+"|"+i.name+"|"+i.cal)) added.push(i);
+      if(clean.length) state.days[key]=clean; else delete state.days[key];
+    }
+    const ng=Math.round(Number(out?.goal));
+    if(ng>0 && ng<20000 && ng!==state.goal) state.goal=ng;
+    state.chat.push({role:"assistant",text:String(out?.reply||"Logged."),items:added,ts:Date.now()});
+  }catch(e){
+    if(e!=="handled") state.chat.push({role:"assistant",text:"That didn't go through. Send it again.",err:true});
+  }
+  state.busy=false;
+  save(); render();
+}
+
+const box=$("box");
+function grow(){ box.style.height="auto"; box.style.height=Math.min(box.scrollHeight,140)+"px"; }
+box.addEventListener("input",grow);
+box.addEventListener("keydown",e=>{ if(e.key==="Enter" && !e.shiftKey && window.matchMedia("(hover:hover)").matches){ e.preventDefault(); $("form").requestSubmit(); }});
+$("form").addEventListener("submit",e=>{
+  e.preventDefault(); const t=box.value.trim(); if(!t||state.busy) return;
+  box.value=""; grow(); show("chat"); send(t);
+});
+
+/* ---------- goal ---------- */
+function openGoal(){ $("goalForm").hidden=false; $("goalLink").hidden=true; $("goalInput").value=state.goal||""; $("goalInput").focus(); }
+function closeGoal(){ $("goalForm").hidden=true; $("goalLink").hidden=false; }
+$("goalLink").onclick=openGoal;
+$("goalCancel").onclick=closeGoal;
+$("goalForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const v=Math.round(Number($("goalInput").value));
+  state.goal = v>0 && v<20000 ? v : 0;
+  closeGoal(); save(); render();
+});
+
+load(); render();
+</script>
+</body>
+</html>
